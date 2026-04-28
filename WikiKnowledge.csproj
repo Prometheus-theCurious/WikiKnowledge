@@ -6,4 +6,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Pages\API\**" />
+    <Content Remove="Pages\API\**" />
+    <EmbeddedResource Remove="Pages\API\**" />
+    <None Remove="Pages\API\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SharpWiki" Version="1.0.0" />
+  </ItemGroup>
+
 </Project>

@@ -1,0 +1,142 @@
+﻿@page
+@model WikiKnowledge.Pages.API.IndexModel
+@{
+    ViewData["Title"] = "API Response";
+}
+
+<h2>Wikipedia languages lookup</h2>
+
+<form method="post" class="mb-3" style="max-width:700px;">
+    <div class="row g-2 align-items-end">
+        <div class="col">
+            <label asp-for="Query" class="form-label">Article title</label>
+            <input asp-for="Query" id="queryInput" class="form-control" autocomplete="off" />
+        </div>
+
+        <div class="col-auto">
+            <label class="form-label">&nbsp;</label>
+            <button id="fetchBtn" type="button" class="btn btn-outline-secondary">Fetch languages</button>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label">Available languages</label>
+            <select id="langSelect" class="form-select" size="6" aria-label="Language combobox">
+                <option value="">No languages loaded</option>
+            </select>
+        </div>
+    </div>
+
+    <input type="hidden" asp-for="SelectedLanguageCode" id="selectedLanguageCode" />
+    <input type="hidden" asp-for="SelectedLanguageTitle" id="selectedLanguageTitle" />
+
+    <div class="mt-3">
+        <button type="submit" class="btn btn-primary">Search summary</button>
+    </div>
+</form>
+
+@if (Model.Summary != null)
+{
+    <h3>@Model.Summary.Title</h3>
+    @if (!string.IsNullOrEmpty(Model.Summary.Extract))
+    {
+        <p>@Model.Summary.Extract</p>
+    }
+    else
+    {
+        <p>No summary available for '@Model.Summary.Title'.</p>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.SelectedLanguageCode))
+    {
+        <p><strong>Selected language code:</strong> @Model.SelectedLanguageCode</p>
+        <p><strong>Selected language title:</strong> @Model.SelectedLanguageTitle</p>
+    }
+}
+
+@section Scripts {
+    <script>
+        (function () {
+            const input = document.getElementById('queryInput');
+            const fetchBtn = document.getElementById('fetchBtn');
+            const select = document.getElementById('langSelect');
+            const hiddenCode = document.getElementById('selectedLanguageCode');
+            const hiddenTitle = document.getElementById('selectedLanguageTitle');
+            let items = [];
+
+            async function fetchLanguages(term) {
+                const q = encodeURIComponent(term || '');
+                try {
+                    const res = await fetch(`?handler=Languages&term=${q}`, {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (!res.ok) {
+                        populateSelect([]);
+                        return;
+                    }
+                    items = await res.json() || [];
+                    populateSelect(items);
+                } catch (e) {
+                    console.error('Language fetch error', e);
+                    populateSelect([]); 
+                }
+            }
+
+            function populateSelect(list) {
+                select.innerHTML = '';
+                if (!list || list.length === 0) {
+                    const opt = document.createElement('option');
+                    opt.textContent = 'No languages found';
+                    opt.value = '';
+                    select.appendChild(opt);
+                    return;
+                }
+
+                for (let i = 0; i < list.length; i++) {
+                    const it = list[i];
+                    const opt = document.createElement('option');
+                    // store code in value, display "<code> — <title>", and keep localized title in data-title
+                    opt.value = it.code || '';
+                    opt.textContent = `${it.code} — ${it.title}`;
+                    opt.setAttribute('data-url', it.url || '');
+                    opt.setAttribute('data-title', it.title || '');
+                    select.appendChild(opt);
+                }
+            }
+
+            // Fetch when user clicks button
+            fetchBtn.addEventListener('click', () => fetchLanguages(input.value));
+
+            // Fetch when user presses Enter in the title field
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    fetchLanguages(input.value);
+                }
+            });
+
+            // When user selects an item, update hidden fields but DO NOT overwrite the Query input
+            select.addEventListener('change', () => {
+                const opt = select.options[select.selectedIndex];
+                if (!opt) return;
+                const code = opt.value || '';
+                const localizedTitle = opt.getAttribute('data-title') || '';
+                hiddenCode.value = code;
+                hiddenTitle.value = localizedTitle;
+                // keep Query as the user typed it; we store the language page title separately
+            });
+
+            // Double-click an option to open the article on that language wiki
+            select.addEventListener('dblclick', () => {
+                const opt = select.options[select.selectedIndex];
+                if (opt) {
+                    const url = opt.getAttribute('data-url');
+                    if (url) window.open(url, '_blank');
+                }
+            });
+
+            // Optional: initial fetch for a default title
+            // fetchLanguages('Germany');
+        })();
+    </script>
+}
