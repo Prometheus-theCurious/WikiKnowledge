@@ -95,7 +95,7 @@
                 for (let i = 0; i < list.length; i++) {
                     const it = list[i];
                     const opt = document.createElement('option');
-                    // store code in value, display "<code> — <title>", and keep localized title in data-title
+                    // store code in value, display "<code> — <title>", and keep localizedarticlename title in data-title
                     opt.value = it.code || '';
                     opt.textContent = `${it.code} — ${it.title}`;
                     opt.setAttribute('data-url', it.url || '');

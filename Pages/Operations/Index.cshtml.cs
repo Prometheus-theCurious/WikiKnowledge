@@ -76,14 +76,14 @@ namespace WikiKnowledge.Pages.API
                 return null;
         }
 
-        // Return structured language links (code, localized title, url)
+        // Return structured language links (code, localizedarticlename title, url)
         static async Task<List<LanguageLink>> GetWikipediaLanguagesAsync(string title, string language)
         {
             var result = new List<LanguageLink>();
             if (string.IsNullOrWhiteSpace(title))
                 return result;
 
-            string apiUrl = $"https://{Uri.EscapeDataString(language)}.wikipedia.org/w/api.php?action=query&prop=langlinks&titles={Uri.EscapeDataString(title)}&lllimit=500&format=json";
+            string apiUrl = $"https://{language}.wikipedia.org/w/api.php?action=query&prop=langlinks&titles={title}&lllimit=500&format=json";
 
             using HttpClient client = new HttpClient();
             client.DefaultRequestHeaders.Add("User-Agent", "CSharpWikipediaClient/1.0");
@@ -106,14 +106,14 @@ namespace WikiKnowledge.Pages.API
                     {
                         foreach (JsonElement link in langlinks.EnumerateArray())
                         {
-                            string code = link.TryGetProperty("lang", out JsonElement langEl) ? langEl.GetString() : null;
-                            string localized = link.TryGetProperty("*", out JsonElement titleEl) ? titleEl.GetString() : null;
-                            if (!string.IsNullOrEmpty(code))
+                            string langcode = link.TryGetProperty("lang", out JsonElement langEl) ? langEl.GetString() : null; //https://de.wikipedia.org/w/api.php?action=query&prop=langlinks&titles=deutschland&lllimit=500&format=json 
+                            string localizedarticlename = link.TryGetProperty("*", out JsonElement titleEl) ? titleEl.GetString() : null; //condition ? value_if_true : value_if_false
+                            if (!string.IsNullOrEmpty(langcode)) // if string ("en") IsNotNull then execute
                             {
-                                var url = !string.IsNullOrEmpty(localized)
-                                    ? $"https://{code}.wikipedia.org/wiki/{Uri.EscapeDataString(localized.Replace(' ', '_'))}"
-                                    : $"https://{code}.wikipedia.org";
-                                result.Add(new LanguageLink { Code = code, Title = localized ?? code, Url = url });
+                                var url = !string.IsNullOrEmpty(localizedarticlename)
+                                    ? $"https://{langcode}.wikipedia.org/wiki/{localizedarticlename.Replace(" ", "")}"
+                                    : $"https://{langcode}.wikipedia.org";
+                                result.Add(new LanguageLink { Code = langcode, Title = localizedarticlename, Url = url });
                             }
                         }
                     }
@@ -126,8 +126,8 @@ namespace WikiKnowledge.Pages.API
         // AJAX handler for the combobox; returns JSON array of { code, title, url }
         public async Task<IActionResult> OnGetLanguagesAsync(string term)
         {
-            var title = string.IsNullOrWhiteSpace(term) ? Query ?? "Deutschland" : Uri.UnescapeDataString(term);
-            var langs = await GetWikipediaLanguagesAsync(title, SelectedLanguageCode??"de");
+            var title = Uri.UnescapeDataString(term)??Query;
+            var langs = await GetWikipediaLanguagesAsync(title, "en");
             return new JsonResult(langs);
         }
 
