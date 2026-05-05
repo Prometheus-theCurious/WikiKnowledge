@@ -11,12 +11,6 @@ namespace WikiKnowledge.Pages.API
 {
     public class IndexModel : PageModel
     {
-        public class WikipediaSummary
-        {
-            public string Title { get; set; }
-            public string Extract { get; set; }
-        }
-
         public class LanguageLink
         {
             [JsonPropertyName("code")]
