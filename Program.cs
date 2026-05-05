@@ -1,3 +1,6 @@
+using Microsoft.EntityFrameworkCore;
+using WikiKnowledge.CallServices;
+using WikiKnowledge.Data;
 using WikiKnowledge.WikipediaServices;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,6 +9,19 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddHttpClient<WikipediaSummary>();
 builder.Services.AddHttpClient<LanguageLink>();
+builder.Services.AddScoped<Services>();
+
+//builder.Services.AddAuthentication()
+//    .AddGoogleOpenIdConnect(googleOptions =>
+//    {
+//        googleOptions.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+//        googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+//    });
+
+builder.Services.AddDbContext<CronologiaContext>(options =>
+{
+    options.UseSqlServer("connectionString");
+});
 
 var app = builder.Build();
 
@@ -21,6 +37,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 
