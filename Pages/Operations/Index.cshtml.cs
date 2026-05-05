@@ -1,29 +1,19 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
+using WikiKnowledge.WikipediaServices;
 
-namespace WikiKnowledge.Pages.API
+namespace WikiKnowledge.Pages.Operations
 {
     public class IndexModel : PageModel
     {
-        public class LanguageLink
-        {
-            [JsonPropertyName("code")]
-            public string Code { get; set; }
-
-            [JsonPropertyName("title")]
-            public string Title { get; set; }
-
-            [JsonPropertyName("url")]
-            public string Url { get; set; }
-        }
-
         // Exposed to Razor to render the results
+        [BindProperty]
         public WikipediaSummary Summary { get; set; }
 
         // Bound to the textbox on the page
@@ -45,10 +35,10 @@ namespace WikiKnowledge.Pages.API
                 return null;
 
             var domain = language;
-            string apiUrl = $"https://{Uri.EscapeDataString(language)}.wikipedia.org/api/rest_v1/page/summary/{Uri.EscapeDataString(title)}";
+            string apiUrl = $"https://{language}.wikipedia.org/api/rest_v1/page/summary/{title}";
             //https://{Uri.EscapeDataString(language)}.wikipedia.org/w/api.php?action=query&titles={Uri.EscapeDataString(title)}&prop=extracts&exintro=true&format=json
             //https://{Uri.EscapeDataString(language)}.wikipedia.org/api/rest_v1/page/summary/{Uri.EscapeDataString(title)}
-
+              
             using HttpClient client = new HttpClient();
             client.DefaultRequestHeaders.Add("User-Agent", "CSharpWikipediaClient/1.0");
 
@@ -117,7 +107,6 @@ namespace WikiKnowledge.Pages.API
             return result;
         }
 
-        // AJAX handler for the combobox; returns JSON array of { code, title, url }
         public async Task<IActionResult> OnGetLanguagesAsync(string term)
         {
             var title = Uri.UnescapeDataString(term)??Query;
